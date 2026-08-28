@@ -7,7 +7,14 @@ No dependencies outside the standard library. Requires Python 3.9+.
 ## Install
 
 ```shell
+# (Not yet available on PyPI)
 pip install justrouting
+```
+
+> Or install from a clone of this repository:
+
+```shell
+pip install -e .
 ```
 
 ```python
