@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from .error import Error, InvalidCoordinatesError, InvalidRequestError
-from .geo import Point
+from .geo import Point, PointLike
 
 __all__ = [
     "OptimizationService",
@@ -87,8 +87,8 @@ class Vehicle:
 
     id: int = 0
     profile: str = ""
-    start: Point = field(default_factory=Point)
-    end: Point = field(default_factory=Point)
+    start: PointLike = field(default_factory=Point)
+    end: PointLike = field(default_factory=Point)
     capacity: List[int] = field(default_factory=list)
     skills: List[int] = field(default_factory=list)
     time_window: Optional[TimeWindow] = None
@@ -144,7 +144,7 @@ class Job:
     """
 
     id: int = 0
-    location: Point = field(default_factory=Point)
+    location: PointLike = field(default_factory=Point)
     setup: int = 0
     service: int = 0
     delivery: List[int] = field(default_factory=list)
@@ -190,7 +190,7 @@ class ShipmentStep:
     """One half of a [Shipment]."""
 
     id: int = 0
-    location: Point = field(default_factory=Point)
+    location: PointLike = field(default_factory=Point)
     setup: int = 0
     service: int = 0
     time_windows: List[TimeWindow] = field(default_factory=list)

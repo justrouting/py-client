@@ -7,7 +7,6 @@ No dependencies outside the standard library. Requires Python 3.9+.
 ## Install
 
 ```shell
-# (Not yet available on PyPI)
 pip install justrouting
 ```
 
@@ -30,8 +29,8 @@ client = justrouting.Client("YOUR_API_KEY")
 
 route = client.routes.get(
     justrouting.RouteRequest(
-        origin=[103.8198, 1.3521],
-        destination=[101.6869, 3.1390],
+        origin=[103.708362, 1.357371],
+        destination=[103.984748, 1.352212],
     ),
     timeout=30,
 )

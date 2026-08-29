@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from .consts import profile_or_default
 from .error import InvalidRequestError, NoRouteError, osrm_status_error
-from .geo import Geometry, LineString, Point, Waypoint, encode_points
+from .geo import Geometry, LineString, Point, PointLike, Waypoint, encode_points
 
 __all__ = [
     "RoutesService",
@@ -54,9 +54,9 @@ class RouteRequest:
             Supported values depend on the profile.
     """
 
-    origin: Point = field(default_factory=Point)
-    destination: Point = field(default_factory=Point)
-    waypoints: List[Point] = field(default_factory=list)
+    origin: PointLike = field(default_factory=Point)
+    destination: PointLike = field(default_factory=Point)
+    waypoints: List[PointLike] = field(default_factory=list)
     profile: str = ""
     alternatives: int = 0
     steps: bool = False
@@ -71,7 +71,7 @@ class RouteRequest:
         self.destination = _point(self.destination)
         self.waypoints = [_point(p) for p in self.waypoints]
 
-    def coordinates(self) -> List[Point]:
+    def coordinates(self) -> List[PointLike]:
         """Flatten the request into the order the engine expects."""
         return [self.origin, *self.waypoints, self.destination]
 

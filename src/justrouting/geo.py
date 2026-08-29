@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import math
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Sequence
 
 from .error import InvalidCoordinatesError
 
-__all__ = ["Point", "Geometry", "LineString", "Waypoint"]
+__all__ = ["Point", "PointLike", "Geometry", "LineString", "Waypoint"]
+
+# Anything the request builders accept as a [longitude, latitude] pair: a
+# Point, or a plain list/tuple of two floats. Point subclasses list, so at
+# runtime the two are interchangeable; PointLike is what the type checker
+# sees on input fields.
+PointLike = Sequence[float]
 
 
 class Point(list):
@@ -84,7 +90,7 @@ def _format_coord(v: float) -> str:
     return format(v, f".{precision}f").rstrip("0").rstrip(".")
 
 
-def encode_points(points: List[Point]) -> str:
+def encode_points(points: List[PointLike]) -> str:
     """Render points as the "lon,lat;lon,lat" path segment that the OSRM
     services expect, validating each point along the way."""
     if not points:

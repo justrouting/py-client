@@ -1,0 +1,7 @@
+{
+    // Make type checkers (basedpyright / pyright) resolve justrouting
+    // from the project venv instead of the PATH global venv.
+    "venvPath": ".",
+    "venv": ".venv",
+    "extraPaths": ["src"]
+}

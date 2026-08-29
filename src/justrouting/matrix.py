@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from .consts import profile_or_default
 from .error import InvalidRequestError, osrm_status_error
-from .geo import Point, Waypoint, encode_points
+from .geo import Point, PointLike, Waypoint, encode_points
 
 __all__ = ["MatrixService", "MatrixRequest", "MatrixResponse"]
 
@@ -40,7 +40,7 @@ class MatrixRequest:
         profile: The routing profile. Defaults to "driving".
     """
 
-    coordinates: List[Point] = field(default_factory=list)
+    coordinates: List[PointLike] = field(default_factory=list)
     sources: List[int] = field(default_factory=list)
     destinations: List[int] = field(default_factory=list)
     annotations: List[str] = field(default_factory=list)

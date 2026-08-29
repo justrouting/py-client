@@ -35,7 +35,7 @@ from .error import (
     UnauthorizedError,
     UpstreamUnavailableError,
 )
-from .geo import Geometry, LineString, Point, Waypoint
+from .geo import Geometry, LineString, Point, PointLike, Waypoint
 from .health import Health, HealthService
 from .matrix import MatrixRequest, MatrixResponse, MatrixService
 from .optimization import (
@@ -90,6 +90,7 @@ __all__ = [
     "DecodeError",
     # Geo
     "Point",
+    "PointLike",
     "Geometry",
     "LineString",
     "Waypoint",
