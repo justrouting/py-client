@@ -19,7 +19,7 @@ def test_client_defaults():
 
     assert c.base_url() == justrouting.DEFAULT_BASE_URL
     assert c._transport.max_retries == 2
-    assert c._transport.user_agent == "justrouting-py/0.1.0"
+    assert c._transport.user_agent == f"justrouting-py/{justrouting.VERSION}"
     assert c.routes is not None
     assert c.matrix is not None
     assert c.optimization is not None
