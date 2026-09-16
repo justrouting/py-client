@@ -340,7 +340,7 @@ class RoutesService:
         coords = encode_points(req.coordinates())
         return self._client.do(
             "GET",
-            "/osrm/route/v1/" + profile_or_default(req.profile) + "/" + coords,
+            "/route/v1/" + profile_or_default(req.profile) + "/" + coords,
             query=req.query(),
             needs_auth=True,
             model=RouteResponse,

@@ -162,7 +162,7 @@ class MatrixService:
 
         return self._client.do(
             "GET",
-            "/osrm/table/v1/" + profile_or_default(req.profile) + "/" + coords,
+            "/table/v1/" + profile_or_default(req.profile) + "/" + coords,
             query=req.query(),
             needs_auth=True,
             model=MatrixResponse,

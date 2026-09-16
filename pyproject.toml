@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "justrouting"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Official Python client for the JustRouting API — routing, distance matrices, and vehicle routing optimization across Southeast Asia."
 readme = "README.md"
 license = "MIT"
@@ -29,6 +29,9 @@ Homepage = "https://justrouting.tech"
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "build>=1.2", "twine>=5"]
+
+[tool.setuptools.dynamic]
+version = {attr = "justrouting.consts.VERSION"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

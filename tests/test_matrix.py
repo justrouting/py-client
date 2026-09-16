@@ -74,7 +74,7 @@ def test_matrix_request_encoding():
     with new_test_client(handler) as c:
         c.matrix.get(matrix_request())
     assert seen["path"] == (
-        "/osrm/table/v1/driving/103.8198,1.3521;103.83,1.3048;103.9915,1.3644"
+        "/table/v1/driving/103.8198,1.3521;103.83,1.3048;103.9915,1.3644"
     )
     assert seen["query"]["annotations"] == ["duration,distance"]
     assert "sources" not in seen["query"]
@@ -98,7 +98,7 @@ def test_matrix_request_encoding():
     with new_test_client(handler) as c:
         c.matrix.get(matrix_request(profile="walking"))
     assert seen["path"] == (
-        "/osrm/table/v1/walking/103.8198,1.3521;103.83,1.3048;103.9915,1.3644"
+        "/table/v1/walking/103.8198,1.3521;103.83,1.3048;103.9915,1.3644"
     )
 
 

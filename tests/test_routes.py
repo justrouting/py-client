@@ -75,7 +75,7 @@ def test_routes_get_empty_routes():
     [
         (
             simple_route(),
-            "/osrm/route/v1/driving/103.8198,1.3521;103.9915,1.3644",
+            "/route/v1/driving/103.8198,1.3521;103.9915,1.3644",
         ),
         (
             justrouting.RouteRequest(
@@ -83,7 +83,7 @@ def test_routes_get_empty_routes():
                 destination=[103.9915, 1.3644],
                 waypoints=[[103.85, 1.29], [103.9, 1.31]],
             ),
-            "/osrm/route/v1/driving/103.8198,1.3521;103.85,1.29;103.9,1.31;103.9915,1.3644",
+            "/route/v1/driving/103.8198,1.3521;103.85,1.29;103.9,1.31;103.9915,1.3644",
         ),
         (
             justrouting.RouteRequest(
@@ -91,14 +91,14 @@ def test_routes_get_empty_routes():
                 destination=[103.9915, 1.3644],
                 profile="cycling",
             ),
-            "/osrm/route/v1/cycling/103.8198,1.3521;103.9915,1.3644",
+            "/route/v1/cycling/103.8198,1.3521;103.9915,1.3644",
         ),
         (
             justrouting.RouteRequest(
                 origin=[-0.1276474, 51.5073219],
                 destination=[-3.188267, 55.953251],
             ),
-            "/osrm/route/v1/driving/-0.1276474,51.5073219;-3.188267,55.953251",
+            "/route/v1/driving/-0.1276474,51.5073219;-3.188267,55.953251",
         ),
     ],
 )

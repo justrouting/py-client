@@ -92,7 +92,7 @@ def test_optimization_request_body():
         c.optimization.solve(req)
 
     assert seen["method"] == "POST"
-    assert seen["path"] == "/vroom"
+    assert seen["path"] == "/optimize"
     body = seen["body"]
 
     vehicles = body["vehicles"]

@@ -501,7 +501,7 @@ class OptimizationService:
 
         return self._client.do(
             "POST",
-            "/vroom",
+            "/optimize",
             body=req.to_dict(),
             needs_auth=True,
             model=Solution,
