@@ -15,7 +15,7 @@ __all__ = [
 # VERSION is the client version, reported in the User-Agent header.
 # It is the single source of truth for the package version: pyproject.toml
 # reads it via [tool.setuptools.dynamic], so bump it in one place only.
-VERSION = "0.1.2"
+VERSION = "0.3.0"
 
 # DEFAULT_BASE_URL is the hosted JustRouting API endpoint.
 DEFAULT_BASE_URL = "https://api.justrouting.tech"

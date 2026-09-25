@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "justrouting"
 dynamic = ["version"]
-description = "Official Python client for the JustRouting API — routing, distance matrices, and vehicle routing optimization across Southeast Asia."
+description = "Official Python client for the JustRouting API — routing, distance matrices, geocoding, map matching, trips, nearest-road lookup, and vehicle routing optimization across Southeast Asia."
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "justrouting" }]
-keywords = ["routing", "osrm", "vroom", "matrix", "optimization", "logistics"]
+keywords = ["routing", "osrm", "vroom", "matrix", "geocoding", "map-matching", "optimization", "logistics"]
 requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",

@@ -1,7 +1,8 @@
 """JustRouting Python client.
 
 Official Python client for the JustRouting API — routing, distance
-matrices, and vehicle routing optimization across Southeast Asia.
+matrices, geocoding, map matching, trips, nearest-road lookup, and
+vehicle routing optimization across Southeast Asia.
 
     client = justrouting.Client("YOUR_API_KEY")
 
@@ -36,8 +37,28 @@ from .error import (
     UpstreamUnavailableError,
 )
 from .geo import Geometry, LineString, Point, PointLike, Waypoint
+from .geocode import (
+    BBox,
+    Datasource,
+    GeocodeQuery,
+    GeocodeRequest,
+    GeocodeResponse,
+    GeocodeResult,
+    GeocodeService,
+    Rank,
+    StructuredQuery,
+    Timezone,
+)
 from .health import Health, HealthService
+from .map_matching import (
+    MapMatchingRequest,
+    MapMatchingResponse,
+    MapMatchingService,
+    Match,
+    Tracepoint,
+)
 from .matrix import MatrixRequest, MatrixResponse, MatrixService
+from .nearest import NearestRequest, NearestResponse, NearestService
 from .optimization import (
     Job,
     OptimizationOptions,
@@ -65,6 +86,7 @@ from .routes import (
     RoutesService,
     Step,
 )
+from .trip import TripRequest, TripResponse, TripService
 
 __version__ = VERSION
 
@@ -97,6 +119,10 @@ __all__ = [
     # Services
     "RoutesService",
     "MatrixService",
+    "MapMatchingService",
+    "TripService",
+    "NearestService",
+    "GeocodeService",
     "OptimizationService",
     "HealthService",
     # Routes
@@ -112,6 +138,27 @@ __all__ = [
     # Matrix
     "MatrixRequest",
     "MatrixResponse",
+    # Map matching
+    "MapMatchingRequest",
+    "MapMatchingResponse",
+    "Match",
+    "Tracepoint",
+    # Trip
+    "TripRequest",
+    "TripResponse",
+    # Nearest
+    "NearestRequest",
+    "NearestResponse",
+    # Geocode
+    "GeocodeRequest",
+    "StructuredQuery",
+    "GeocodeResponse",
+    "GeocodeQuery",
+    "GeocodeResult",
+    "Datasource",
+    "Rank",
+    "Timezone",
+    "BBox",
     # Optimization
     "OptimizationRequest",
     "OptimizationOptions",

@@ -37,11 +37,15 @@ import urllib.parse
 from typing import Callable, Optional
 
 from .consts import DEFAULT_BASE_URL, DEFAULT_PROFILE, VERSION
+from .geocode import GeocodeService
 from .health import HealthService
+from .map_matching import MapMatchingService
 from .matrix import MatrixService
+from .nearest import NearestService
 from .optimization import OptimizationService
 from .routes import RoutesService
 from .transport import Transport, default_backoff
+from .trip import TripService
 
 __all__ = [
     "Client",
@@ -129,6 +133,14 @@ class Client:
         self.routes = RoutesService(self._transport)
         # Matrix computes duration and distance matrices.
         self.matrix = MatrixService(self._transport)
+        # Map matching snaps GPS traces onto the road network.
+        self.map_matching = MapMatchingService(self._transport)
+        # Trip finds the fastest order to visit a set of coordinates.
+        self.trip = TripService(self._transport)
+        # Nearest finds the road segment closest to a coordinate.
+        self.nearest = NearestService(self._transport)
+        # Geocode converts addresses into coordinates.
+        self.geocode = GeocodeService(self._transport)
         # Optimization solves vehicle routing problems.
         self.optimization = OptimizationService(self._transport)
         # Health reports API and upstream availability.

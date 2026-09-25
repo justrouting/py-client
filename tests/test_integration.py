@@ -110,6 +110,81 @@ def test_integration_matrix():
     assert m.duration(0, 1) is not None and m.duration(0, 1) > 0
 
 
+def test_integration_geocode():
+    require_api_key()
+    results = integration_client().geocode.search(
+        justrouting.GeocodeRequest(
+            text="Marina Bay Sands, Singapore",
+            limit=3,
+        ),
+        timeout=30,
+    )
+
+    assert len(results.results) > 0
+    top = results.results[0]
+    assert top.formatted != ""
+    top.location().validate()  # must not raise
+    print(f"top result: {top.formatted} at {top.location()}")
+
+
+def test_integration_nearest():
+    require_api_key()
+    wp = integration_client().nearest.get(
+        justrouting.NearestRequest(coordinate=[103.8198, 1.3521]),
+        timeout=30,
+    )
+
+    wp.location.validate()  # must not raise
+    print(f"nearest segment: {wp.name}, {wp.distance:.0f} m away")
+
+
+def test_integration_map_matching():
+    require_api_key()
+    # A trace along the East Coast Parkway, from Marina Bay towards
+    # Changi. Map matching needs points that follow a drivable path, not
+    # arbitrary far-apart coordinates.
+    match = integration_client().map_matching.get(
+        justrouting.MapMatchingRequest(
+            coordinates=[
+                [103.823679, 1.355111],
+                [103.831810, 1.355074],
+                [103.839222, 1.346059],
+                [103.856595, 1.343471],
+                [103.864702, 1.329605],
+                [103.887874, 1.322419],
+                [103.928786, 1.335564],
+                [103.962769, 1.350345],
+                [103.983033, 1.344782],
+                [103.990312, 1.361474],
+            ]
+        ),
+        timeout=30,
+    )
+
+    assert 0 < match.confidence <= 1
+    assert match.distance > 0
+    print(f"{match.confidence * 100:.0f}% confidence, {match.distance / 1000:.2f} km")
+
+
+def test_integration_trip():
+    require_api_key()
+    resp = integration_client().trip.get_all(
+        justrouting.TripRequest(
+            coordinates=[
+                [103.8198, 1.3521],
+                [103.8514, 1.2897],
+                [103.9915, 1.3644],
+            ]
+        ),
+        timeout=30,
+    )
+
+    assert len(resp.trips) > 0
+    assert resp.trips[0].distance > 0
+    assert len(resp.waypoints) == 3
+    print(f"{resp.trips[0].distance / 1000:.2f} km visiting {len(resp.waypoints)} waypoints")
+
+
 def test_integration_optimization():
     require_api_key()
     solution = integration_client().optimization.solve(

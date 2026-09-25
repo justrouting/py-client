@@ -179,6 +179,8 @@ class Waypoint:
         location: The snapped position.
         distance: The metres between the input coordinate and ``location``.
         hint: An opaque token that can speed up subsequent requests.
+        nodes: The OSM node IDs of the snapped segment, when the engine
+            returns them.
     """
 
     def __init__(
@@ -187,11 +189,13 @@ class Waypoint:
         location: Optional[Point] = None,
         distance: float = 0.0,
         hint: str = "",
+        nodes: Optional[List[int]] = None,
     ) -> None:
         self.name = name
         self.location = Point(location) if location is not None else Point()
         self.distance = distance
         self.hint = hint
+        self.nodes = nodes or []
 
     @classmethod
     def from_dict(cls, d: dict) -> "Waypoint":
@@ -200,6 +204,7 @@ class Waypoint:
             location=Point(d["location"]) if d.get("location") else Point(),
             distance=d.get("distance", 0.0),
             hint=d.get("hint", ""),
+            nodes=d.get("nodes") or [],
         )
 
     def __repr__(self) -> str:

@@ -1,6 +1,6 @@
 # JustRouting Python Client
 
-Official Python client for the [JustRouting](https://justrouting.tech) API — routing, distance matrices, and vehicle routing optimization across Southeast Asia.
+Official Python client for the [JustRouting](https://justrouting.tech) API — routing, distance matrices, geocoding, map matching, trips, nearest-road lookup, and vehicle routing optimization across Southeast Asia.
 
 No dependencies outside the standard library. Requires Python 3.9+.
 
@@ -42,7 +42,7 @@ print(f"Distance: {route.distance / 1000:.1f} km")
 
 ## Services
 
-A `Client` exposes four services.
+A `Client` exposes eight services.
 
 ### Routes
 
@@ -85,6 +85,71 @@ if seconds is not None:
 ```
 
 The accessors return `None` for unreachable pairs. The API reports those as `null`, which is deliberately kept distinct from a genuine zero.
+
+### Geocode
+
+Turn addresses into coordinates, free-form or structured:
+
+```python
+results = client.geocode.search(justrouting.GeocodeRequest(
+    text="Marina Bay Sands, Singapore",
+    limit=3,
+    filters=["countrycode:sg"],   # one filter per entry
+))
+
+r = results.results[0]
+print(r.formatted)      # "Marina Bay Sands, 10 Bayfront Avenue, 018956, Singapore"
+print(r.location())     # a Point: [103.859, 1.2834]
+print(r.rank.confidence)
+```
+
+`structured` (an address as typed fields) is mutually exclusive with `text`; `bias` steers results toward a location. An empty `results` list means nothing matched — it is a valid answer, not an error.
+
+### Map Matching
+
+Snap a noisy GPS trace onto the road network:
+
+```python
+match = client.map_matching.get(justrouting.MapMatchingRequest(
+    coordinates=trace,     # GPS points, in chronological order
+    timestamps=ts,         # optional: UNIX seconds, one per point
+    radiuses=rs,           # optional: max snap distance per point, metres
+))
+
+print(f"{match.confidence * 100:.0f}% confidence")  # 0 to 1
+```
+
+`Match` extends `Route`, so `distance`, `duration`, `geometry`, and `legs` are all available. `get_all` also returns `tracepoints` aligned with the input coordinates — `None` entries mark points that could not be matched. Use `gaps="ignore"`, `tidy=True`, `waypoints=[0, 5]`, or `snapping="any"` to shape the matching.
+
+### Trip
+
+The fastest order to visit a set of coordinates:
+
+```python
+resp = client.trip.get_all(justrouting.TripRequest(
+    coordinates=[depot, stop_a, stop_b],
+    roundtrip=False,   # default (None) ends where it started
+))
+
+trip = resp.trips[0]
+print([wp.name for wp in resp.waypoints])  # in visiting order
+```
+
+`source="first"` / `destination="last"` pin where the trip starts and ends.
+
+### Nearest
+
+The road segment closest to a coordinate:
+
+```python
+wp = client.nearest.get(justrouting.NearestRequest(
+    coordinate=[103.8198, 1.3521],
+    number=3,   # 2nd- and 3rd-nearest segments too
+))
+
+print(wp.name, wp.location, wp.distance)  # street, snapped point, metres
+print(wp.nodes)                           # OSM node IDs, when present
+```
 
 ### Optimization
 
@@ -145,6 +210,8 @@ except justrouting.NoRouteError:
 | `NoRouteError` | No route exists between the points |
 | `UpstreamUnavailableError` | Routing engine unreachable; usually transient |
 | `InvalidRequestError` | Rejected locally before any request was sent |
+
+When the engine finds nothing — an empty `matchings`, `trips`, or `waypoints` list on an "Ok" response — map matching, trip, and nearest raise `Error` with `status_code == 200` and `osrm_code` `"NoMatch"`, `"NoTrip"`, or `"NoSegment"` (no dedicated subclass; check `e.osrm_code`).
 
 Catch `justrouting.Error` itself when you need the status code, engine code, or raw body:
 
@@ -220,6 +287,10 @@ Runnable scripts live in [`examples/`](./examples):
 export JUSTROUTING_API_KEY=<your key>
 python examples/route.py
 python examples/matrix.py
+python examples/geocode.py
+python examples/map_matching.py
+python examples/trip.py
+python examples/nearest.py
 python examples/optimization.py
 ```
 

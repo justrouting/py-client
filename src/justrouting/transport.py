@@ -227,7 +227,9 @@ class Transport:
         ";" are legal in a path segment and must survive unescaped."""
         scheme, netloc, base_path, _, _ = urllib.parse.urlsplit(self.base_url)
         full_path = base_path.rstrip("/") + path
-        query_string = urllib.parse.urlencode(query) if query else ""
+        # doseq expands list values into repeated keys, which the geocoding
+        # service needs for its repeatable "filter" parameter.
+        query_string = urllib.parse.urlencode(query, doseq=True) if query else ""
         return urllib.parse.urlunsplit((scheme, netloc, full_path, query_string, ""))
 
     def _next_delay(self, attempt: int, headers) -> float:
