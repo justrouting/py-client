@@ -1,5 +1,10 @@
 # JustRouting Python Client
 
+[![CI](https://github.com/justrouting/py-client/actions/workflows/ci.yml/badge.svg)](https://github.com/justrouting/py-client/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/justrouting)](https://pypi.org/project/justrouting/)
+[![Python](https://img.shields.io/pypi/pyversions/justrouting)](https://pypi.org/project/justrouting/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Official Python client for the [JustRouting](https://justrouting.tech) API — routing, distance matrices, geocoding, map matching, trips, nearest-road lookup, and vehicle routing optimization across Southeast Asia.
 
 No dependencies outside the standard library. Requires Python 3.9+.
