@@ -43,7 +43,7 @@ route = client.routes.get(
 print(f"Distance: {route.distance / 1000:.1f} km")
 ```
 
-> The coordinates above are Singapore and Kuala Lumpur, which span two countries. See [Coordinates must share a country](#coordinates-must-share-a-country) — the runnable examples use same-country pairs.
+> The coordinates above are in Singapore. See [Coordinates must share a country](#coordinates-must-share-a-country).
 
 ## Services
 
