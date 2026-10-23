@@ -7,7 +7,7 @@
 
 Official Python client for the [JustRouting](https://justrouting.tech) API — routing, distance matrices, geocoding, map matching, trips, nearest-road lookup, and vehicle routing optimization across Southeast Asia.
 
-No dependencies outside the standard library. Requires Python 3.9+.
+No dependencies outside the standard library. Requires Python 3.10+.
 
 ## Install
 
