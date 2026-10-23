@@ -1,0 +1,51 @@
+# Publish to PyPI when a v* tag is pushed.
+#
+# The package version is read dynamically from justrouting.consts.VERSION, so
+# the workflow verifies that the tag and the source version agree before
+# uploading anything. Requires a repository secret PYPI_TOKEN holding a PyPI
+# API token scoped to the justrouting project (Settings → Secrets and
+# variables → Actions).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install
+        run: pip install -e '.[dev]'
+
+      - name: Run tests
+        run: pytest
+
+      - name: Verify tag matches package version
+        run: |
+          VERSION="$(python -c 'import justrouting; print(justrouting.VERSION)')"
+          if [ "$VERSION" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match justrouting.VERSION $VERSION" >&2
+            exit 1
+          fi
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Check package metadata
+        run: python -m twine check dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: python -m twine upload dist/*
