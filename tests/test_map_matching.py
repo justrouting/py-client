@@ -36,7 +36,8 @@ def simple_match():
             [103.8198, 1.3521],
             [103.8514, 1.2897],
             [103.9915, 1.3644],
-        ]
+        ],
+        timestamps=[1720000000, 1720000060, 1720000120],
     )
 
 
@@ -91,6 +92,7 @@ def test_map_matching_get_empty_matchings():
         (
             justrouting.MapMatchingRequest(
                 coordinates=[[103.8198, 1.3521], [103.9915, 1.3644]],
+                timestamps=[1720000000, 1720000060],
                 profile="motorcycle",
             ),
             "/match/v1/motorcycle/103.8198,1.3521;103.9915,1.3644",
@@ -123,10 +125,13 @@ def test_map_matching_query_encoding():
     with new_test_client(handler) as c:
         c.map_matching.get(simple_match())
     for key in [
-        "timestamps", "radiuses", "gaps", "tidy", "waypoints", "snapping",
+        "radiuses", "gaps", "tidy", "waypoints", "snapping",
         "steps", "geometries", "overview", "annotations",
+        "bearings", "hints", "approaches", "generate_hints", "skip_waypoints",
     ]:
         assert key not in seen["query"]
+    # timestamps is required and always sent.
+    assert seen["query"]["timestamps"] == ["1720000000;1720000060;1720000120"]
 
     # all options
     seen.clear()
@@ -145,6 +150,11 @@ def test_map_matching_query_encoding():
                 geometries="geojson",
                 overview="full",
                 exclude=["motorway", "ferry"],
+                bearings=["0,20", "90", ""],
+                hints=["abcDEF==", "ghiJKL==", "mnoPQR=="],
+                approaches=["curb", "opposite", ""],
+                generate_hints=False,
+                skip_waypoints=True,
             )
         )
     for key, value in {
@@ -161,6 +171,11 @@ def test_map_matching_query_encoding():
         "geometries": "geojson",
         "overview": "full",
         "exclude": "motorway,ferry",
+        "bearings": "0,20;90;",
+        "hints": "abcDEF==;ghiJKL==;mnoPQR==",
+        "approaches": "curb;opposite;",
+        "generate_hints": "false",
+        "skip_waypoints": "true",
     }.items():
         assert seen["query"][key] == [value]
 
@@ -170,6 +185,7 @@ def test_map_matching_query_encoding():
         c.map_matching.get(
             justrouting.MapMatchingRequest(
                 coordinates=[[103.8198, 1.3521], [103.9915, 1.3644]],
+                timestamps=[1720000000, 1720000060],
                 tidy=False,
                 steps=False,
             )
@@ -185,26 +201,33 @@ def test_map_matching_query_encoding():
         justrouting.MapMatchingRequest(  # one coordinate
             coordinates=[[103.8, 1.3]]
         ),
+        justrouting.MapMatchingRequest(  # missing timestamps
+            coordinates=[[103.8, 1.3], [103.9, 1.3]]
+        ),
         justrouting.MapMatchingRequest(  # timestamp count mismatch
             coordinates=[[103.8, 1.3], [103.9, 1.3], [104.0, 1.3]],
             timestamps=[1720000000],
         ),
         justrouting.MapMatchingRequest(  # radius count mismatch
             coordinates=[[103.8, 1.3], [103.9, 1.3], [104.0, 1.3]],
+            timestamps=[1720000000, 1720000060, 1720000120],
             radiuses=[10, 15],
         ),
         # The engine rejects a single shared radius, so it is caught
         # locally.
         justrouting.MapMatchingRequest(  # single radius for 3 coordinates
             coordinates=[[103.8, 1.3], [103.9, 1.3], [104.0, 1.3]],
+            timestamps=[1720000000, 1720000060, 1720000120],
             radiuses=[10],
         ),
         justrouting.MapMatchingRequest(  # negative radius
             coordinates=[[103.8, 1.3], [103.9, 1.3]],
+            timestamps=[1720000000, 1720000060],
             radiuses=[-5],
         ),
         justrouting.MapMatchingRequest(  # waypoint index out of range
             coordinates=[[103.8, 1.3], [103.9, 1.3]],
+            timestamps=[1720000000, 1720000060],
             waypoints=[0, 5],
         ),
     ],
@@ -228,6 +251,7 @@ def test_map_matching_rejects_bad_coordinates_locally():
         with pytest.raises(justrouting.InvalidCoordinatesError):
             c.map_matching.get(
                 justrouting.MapMatchingRequest(
-                    coordinates=[[1.3521, 103.8198], [103.9915, 1.3644]]
+                    coordinates=[[1.3521, 103.8198], [103.9915, 1.3644]],
+                    timestamps=[1720000000, 1720000060],
                 )
             )

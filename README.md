@@ -117,14 +117,14 @@ Snap a noisy GPS trace onto the road network:
 ```python
 match = client.map_matching.get(justrouting.MapMatchingRequest(
     coordinates=trace,     # GPS points, in chronological order
-    timestamps=ts,         # optional: UNIX seconds, one per point
+    timestamps=ts,         # required: UNIX seconds, one per point
     radiuses=rs,           # optional: max snap distance per point, metres
 ))
 
 print(f"{match.confidence * 100:.0f}% confidence")  # 0 to 1
 ```
 
-`Match` extends `Route`, so `distance`, `duration`, `geometry`, and `legs` are all available. `get_all` also returns `tracepoints` aligned with the input coordinates — `None` entries mark points that could not be matched. Use `gaps="ignore"`, `tidy=True`, `waypoints=[0, 5]`, or `snapping="any"` to shape the matching.
+`Match` extends `Route`, so `distance`, `duration`, `geometry`, and `legs` are all available. `get_all` also returns `tracepoints` aligned with the input coordinates — `None` entries mark points that could not be matched. Use `gaps="ignore"`, `tidy=True`, `waypoints=[0, 5]`, or `snapping="any"` to shape the matching; `bearings`, `hints`, `approaches`, `exclude`, `generate_hints`, and `skip_waypoints` are also supported.
 
 ### Trip
 

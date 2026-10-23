@@ -60,6 +60,8 @@ from .map_matching import (
 from .matrix import MatrixRequest, MatrixResponse, MatrixService
 from .nearest import NearestRequest, NearestResponse, NearestService
 from .optimization import (
+    Break,
+    CustomMatrix,
     Job,
     OptimizationOptions,
     OptimizationRequest,
@@ -72,7 +74,10 @@ from .optimization import (
     TimeWindow,
     Unassigned,
     Vehicle,
+    VehicleCosts,
     VehicleRoute,
+    VehicleStep,
+    Violation,
 )
 from .routes import (
     Annotation,
@@ -163,7 +168,12 @@ __all__ = [
     "OptimizationRequest",
     "OptimizationOptions",
     "TimeWindow",
+    "CustomMatrix",
     "Vehicle",
+    "Break",
+    "VehicleCosts",
+    "VehicleStep",
+    "Violation",
     "Job",
     "ShipmentStep",
     "Shipment",

@@ -42,6 +42,28 @@ class TripRequest:
             "false" to omit it.
         exclude: Road classes to avoid, such as "motorway" or "ferry".
             Supported values depend on the profile.
+        bearings: Restrict the direction of travel at each coordinate, one
+            entry per coordinate in visiting order: ``"{bearing}"`` or
+            ``"{bearing},{range}"`` in degrees, for example ``"0,20"`` for
+            north within ±20°. Coordinates without a restriction use the
+            default when their entry is missing at the end of the list.
+        radiuses: The snapping radius in metres per coordinate, one entry
+            per coordinate in visiting order; ``"unlimited"`` disables
+            snapping for that coordinate.
+        hints: Opaque tokens from a previous response's waypoints that
+            speed up snapping, one entry per coordinate in visiting order.
+        approaches: Restrict the road direction at each waypoint, one
+            entry per waypoint in visiting order: ``"curb"``, ``"opposite"``,
+            or ``"unrestricted"`` (the engine default). An empty entry also
+            selects the default.
+        snapping: How coordinates snap onto the road network: ``"default"``
+            (the engine default) avoids edges that cannot be used as start
+            or end points; ``"any"`` snaps to any edge.
+        generate_hints: Request a ``"hint"`` on every response waypoint for
+            reuse in later requests. The engine does this by default; set
+            to ``False`` to omit hints.
+        skip_waypoints: Omit the response waypoints. They still take part
+            in the trip calculation.
     """
 
     coordinates: List[PointLike] = field(default_factory=list)
@@ -54,6 +76,13 @@ class TripRequest:
     geometries: str = ""
     overview: str = ""
     exclude: List[str] = field(default_factory=list)
+    bearings: List[str] = field(default_factory=list)
+    radiuses: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    approaches: List[str] = field(default_factory=list)
+    snapping: str = ""
+    generate_hints: Optional[bool] = None
+    skip_waypoints: bool = False
 
     def __post_init__(self) -> None:
         self.coordinates = [_point(p) for p in self.coordinates]
@@ -76,6 +105,20 @@ class TripRequest:
             q["overview"] = self.overview
         if self.exclude:
             q["exclude"] = ",".join(self.exclude)
+        if self.bearings:
+            q["bearings"] = ";".join(self.bearings)
+        if self.radiuses:
+            q["radiuses"] = ";".join(self.radiuses)
+        if self.hints:
+            q["hints"] = ";".join(self.hints)
+        if self.approaches:
+            q["approaches"] = ";".join(self.approaches)
+        if self.snapping:
+            q["snapping"] = self.snapping
+        if self.generate_hints is not None:
+            q["generate_hints"] = "true" if self.generate_hints else "false"
+        if self.skip_waypoints:
+            q["skip_waypoints"] = "true"
         return q
 
 

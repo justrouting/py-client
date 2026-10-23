@@ -52,6 +52,32 @@ class RouteRequest:
             waypoint. ``None`` leaves the decision to the engine.
         exclude: Road classes to avoid, such as "motorway" or "ferry".
             Supported values depend on the profile.
+        bearings: Restrict the direction of travel at each coordinate, one
+            entry per coordinate in visiting order: ``"{bearing}"`` or
+            ``"{bearing},{range}"`` in degrees, for example ``"0,20"`` for
+            north within ±20°. Coordinates without a restriction use the
+            default when their entry is missing at the end of the list.
+        radiuses: The snapping radius in metres per coordinate, one entry
+            per coordinate in visiting order; ``"unlimited"`` disables
+            snapping for that coordinate.
+        hints: Opaque tokens from a previous response's waypoints that
+            speed up snapping, one entry per coordinate in visiting order.
+        approaches: Restrict the road direction at each waypoint, one
+            entry per waypoint in visiting order: ``"curb"``, ``"opposite"``,
+            or ``"unrestricted"`` (the engine default). An empty entry also
+            selects the default.
+        snapping: How coordinates snap onto the road network: ``"default"``
+            (the engine default) avoids edges that cannot be used as start
+            or end points; ``"any"`` snaps to any edge.
+        generate_hints: Request a ``"hint"`` on every response waypoint for
+            reuse in later requests. The engine does this by default; set
+            to ``False`` to omit hints.
+        skip_waypoints: Omit the response waypoints. They still take part
+            in the route calculation.
+        waypoint_indices: The indices of the input coordinates that the
+            response should treat as waypoints, for example ``[0, 3]`` to
+            keep only the first and last. The engine treats every input
+            coordinate as a waypoint by default.
     """
 
     origin: PointLike = field(default_factory=Point)
@@ -65,6 +91,14 @@ class RouteRequest:
     overview: str = ""
     continue_straight: Optional[bool] = None
     exclude: List[str] = field(default_factory=list)
+    bearings: List[str] = field(default_factory=list)
+    radiuses: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    approaches: List[str] = field(default_factory=list)
+    snapping: str = ""
+    generate_hints: Optional[bool] = None
+    skip_waypoints: bool = False
+    waypoint_indices: List[int] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.origin = _point(self.origin)
@@ -91,6 +125,22 @@ class RouteRequest:
             q["continue_straight"] = "true" if self.continue_straight else "false"
         if self.exclude:
             q["exclude"] = ",".join(self.exclude)
+        if self.bearings:
+            q["bearings"] = ";".join(self.bearings)
+        if self.radiuses:
+            q["radiuses"] = ";".join(self.radiuses)
+        if self.hints:
+            q["hints"] = ";".join(self.hints)
+        if self.approaches:
+            q["approaches"] = ";".join(self.approaches)
+        if self.snapping:
+            q["snapping"] = self.snapping
+        if self.generate_hints is not None:
+            q["generate_hints"] = "true" if self.generate_hints else "false"
+        if self.skip_waypoints:
+            q["skip_waypoints"] = "true"
+        if self.waypoint_indices:
+            q["waypoints"] = ";".join(str(i) for i in self.waypoint_indices)
         return q
 
 
@@ -216,6 +266,7 @@ class Intersection:
     in_: Optional[int] = None
     out: Optional[int] = None
     lanes: List["Lane"] = field(default_factory=list)
+    classes: List[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, d: dict) -> "Intersection":
@@ -226,6 +277,7 @@ class Intersection:
             in_=d.get("in"),
             out=d.get("out"),
             lanes=[Lane.from_dict(lane) for lane in d.get("lanes") or []],
+            classes=d.get("classes") or [],
         )
 
 
@@ -274,12 +326,14 @@ class RouteResponse:
     Attributes:
         code: The engine status, "Ok" on success.
         message: Explains a non-Ok ``code``.
+        data_version: The timestamp of the OSM data the engine used.
         routes: Ordered best first.
         waypoints: The input coordinates snapped to the road network.
     """
 
     code: str = ""
     message: str = ""
+    data_version: str = ""
     routes: List[Optional[Route]] = field(default_factory=list)
     waypoints: List[Waypoint] = field(default_factory=list)
 
@@ -288,6 +342,7 @@ class RouteResponse:
         return cls(
             code=d.get("code", ""),
             message=d.get("message", ""),
+            data_version=d.get("data_version", ""),
             routes=[
                 None if r is None else Route.from_dict(r) for r in d.get("routes") or []
             ],

@@ -31,8 +31,10 @@ class MapMatchingRequest:
 
     Attributes:
         coordinates: The trace to match, in chronological order.
-        timestamps: UNIX seconds for each coordinate. When set, its length
-            must equal the number of coordinates.
+        timestamps: UNIX seconds for each coordinate, in monotonically
+            increasing order. Required: the API specification and upstream
+            OSRM both expect them, even though the hosted gateway accepts
+            requests without them (with degraded matching).
         radiuses: The maximum distance in metres each coordinate may snap,
             one value per coordinate. The engine's default snap distance
             is only a few metres, so GPS points further from the road need
@@ -53,6 +55,22 @@ class MapMatchingRequest:
             "false" to omit it.
         exclude: Road classes to avoid, such as "motorway" or "ferry".
             Supported values depend on the profile.
+        bearings: Restrict the direction of travel at each coordinate, one
+            entry per coordinate in visiting order: ``"{bearing}"`` or
+            ``"{bearing},{range}"`` in degrees, for example ``"0,20"`` for
+            north within ±20°. Coordinates without a restriction use the
+            default when their entry is missing at the end of the list.
+        hints: Opaque tokens from a previous response's tracepoints that
+            speed up snapping, one entry per coordinate in visiting order.
+        approaches: Restrict the road direction at each waypoint, one
+            entry per waypoint in visiting order: ``"curb"``, ``"opposite"``,
+            or ``"unrestricted"`` (the engine default). An empty entry also
+            selects the default.
+        generate_hints: Request a ``"hint"`` on every response tracepoint
+            for reuse in later requests. The engine does this by default;
+            set to ``False`` to omit hints.
+        skip_waypoints: Omit the response waypoints. They still take part
+            in the matching calculation.
     """
 
     coordinates: List[PointLike] = field(default_factory=list)
@@ -68,6 +86,11 @@ class MapMatchingRequest:
     geometries: str = ""
     overview: str = ""
     exclude: List[str] = field(default_factory=list)
+    bearings: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    approaches: List[str] = field(default_factory=list)
+    generate_hints: Optional[bool] = None
+    skip_waypoints: bool = False
 
     def __post_init__(self) -> None:
         self.coordinates = [_point(p) for p in self.coordinates]
@@ -98,6 +121,16 @@ class MapMatchingRequest:
             q["overview"] = self.overview
         if self.exclude:
             q["exclude"] = ",".join(self.exclude)
+        if self.bearings:
+            q["bearings"] = ";".join(self.bearings)
+        if self.hints:
+            q["hints"] = ";".join(self.hints)
+        if self.approaches:
+            q["approaches"] = ";".join(self.approaches)
+        if self.generate_hints is not None:
+            q["generate_hints"] = "true" if self.generate_hints else "false"
+        if self.skip_waypoints:
+            q["skip_waypoints"] = "true"
         return q
 
 
@@ -216,6 +249,7 @@ class MapMatchingService:
 
             match = client.map_matching.get(justrouting.MapMatchingRequest(
                 coordinates=trace,  # GPS points, in order
+                timestamps=ts,      # required: UNIX seconds, one per point
             ))
             print(f"{match.confidence * 100:.0f}% confidence, "
                   f"{match.distance / 1000:.1f} km")
@@ -244,7 +278,11 @@ class MapMatchingService:
             raise InvalidRequestError(
                 f"justrouting: Coordinates needs at least 2 points, got {len(req.coordinates)}"
             )
-        if req.timestamps and len(req.timestamps) != len(req.coordinates):
+        if not req.timestamps:
+            raise InvalidRequestError(
+                "justrouting: Timestamps is required for map matching"
+            )
+        if len(req.timestamps) != len(req.coordinates):
             raise InvalidRequestError(
                 f"justrouting: Timestamps has {len(req.timestamps)} values "
                 f"for {len(req.coordinates)} coordinates"

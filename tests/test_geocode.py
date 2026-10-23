@@ -18,6 +18,7 @@ GEOCODE_FIXTURE = """{
     "name": "Marina Bay Sands",
     "housenumber": "10",
     "street": "Bayfront Avenue",
+    "district": "Central Region",
     "city": "Singapore",
     "county": "Singapore",
     "state": "Singapore",
@@ -73,6 +74,7 @@ def test_geocode_search_decodes_response():
 
     assert r.formatted == "Marina Bay Sands, 10 Bayfront Avenue, 018956, Singapore"
     assert r.street == "Bayfront Avenue"
+    assert r.district == "Central Region"
     assert r.country_code == "sg"
     assert (r.lon, r.lat) == (103.859, 1.2834)
     assert r.rank.confidence == 1

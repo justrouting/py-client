@@ -20,7 +20,8 @@ MATRIX_FIXTURE = """{
     {"hint":"a","distance":4.2,"name":"Marina Boulevard","location":[103.81982,1.35211]},
     {"hint":"b","distance":2.1,"name":"Orchard Road","location":[103.83,1.3048]},
     {"hint":"c","distance":8.1,"name":"Changi Coast Road","location":[103.99151,1.36442]}
-  ]
+  ],
+  "fallback_speed_cells": [[1, 2], [2, 1]]
 }"""
 
 
@@ -40,6 +41,7 @@ def test_matrix_get_decodes_response():
 
     assert m.duration(0, 1) == 612.4
     assert m.distance(0, 2) == 24512.7
+    assert m.fallback_speed_cells == [[1, 2], [2, 1]]
 
 
 def test_matrix_unreachable_pairs():
@@ -77,8 +79,12 @@ def test_matrix_request_encoding():
         "/table/v1/driving/103.8198,1.3521;103.83,1.3048;103.9915,1.3644"
     )
     assert seen["query"]["annotations"] == ["duration,distance"]
-    assert "sources" not in seen["query"]
-    assert "destinations" not in seen["query"]
+    for key in [
+        "sources", "destinations", "fallback_speed", "fallback_coordinate",
+        "scale_factor", "bearings", "radiuses", "hints", "approaches",
+        "exclude", "snapping", "generate_hints", "skip_waypoints",
+    ]:
+        assert key not in seen["query"]
 
     # sources and destinations subsets
     seen.clear()
@@ -92,6 +98,47 @@ def test_matrix_request_encoding():
     with new_test_client(handler) as c:
         c.matrix.get(matrix_request(annotations=["duration"]))
     assert seen["query"]["annotations"] == ["duration"]
+
+    # all general options
+    seen.clear()
+    with new_test_client(handler) as c:
+        c.matrix.get(
+            matrix_request(
+                bearings=["0,20", "90", ""],
+                radiuses=["unlimited", "500", "250"],
+                hints=["abcDEF==", "ghiJKL==", "mnoPQR=="],
+                approaches=["curb", "opposite", ""],
+                exclude=["motorway", "ferry"],
+                snapping="any",
+                generate_hints=False,
+                skip_waypoints=True,
+            )
+        )
+    for key, value in {
+        "bearings": "0,20;90;",
+        "radiuses": "unlimited;500;250",
+        "hints": "abcDEF==;ghiJKL==;mnoPQR==",
+        "approaches": "curb;opposite;",
+        "exclude": "motorway,ferry",
+        "snapping": "any",
+        "generate_hints": "false",
+        "skip_waypoints": "true",
+    }.items():
+        assert seen["query"][key] == [value]
+
+    # fallback and scaling options
+    seen.clear()
+    with new_test_client(handler) as c:
+        c.matrix.get(
+            matrix_request(
+                fallback_speed=30,
+                fallback_coordinate="snapped",
+                scale_factor=1.2,
+            )
+        )
+    assert seen["query"]["fallback_speed"] == ["30"]
+    assert seen["query"]["fallback_coordinate"] == ["snapped"]
+    assert seen["query"]["scale_factor"] == ["1.2"]
 
     # custom profile
     seen.clear()

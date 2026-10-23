@@ -181,6 +181,10 @@ class Waypoint:
         hint: An opaque token that can speed up subsequent requests.
         nodes: The OSM node IDs of the snapped segment, when the engine
             returns them.
+        trips_index: Which entry of a trip response this waypoint belongs
+            to, when the engine returns it.
+        waypoint_index: The position of this waypoint within its trip,
+            when the engine returns it.
     """
 
     def __init__(
@@ -190,12 +194,16 @@ class Waypoint:
         distance: float = 0.0,
         hint: str = "",
         nodes: Optional[List[int]] = None,
+        trips_index: int = 0,
+        waypoint_index: int = 0,
     ) -> None:
         self.name = name
         self.location = Point(location) if location is not None else Point()
         self.distance = distance
         self.hint = hint
         self.nodes = nodes or []
+        self.trips_index = trips_index
+        self.waypoint_index = waypoint_index
 
     @classmethod
     def from_dict(cls, d: dict) -> "Waypoint":
@@ -205,6 +213,8 @@ class Waypoint:
             distance=d.get("distance", 0.0),
             hint=d.get("hint", ""),
             nodes=d.get("nodes") or [],
+            trips_index=d.get("trips_index", 0),
+            waypoint_index=d.get("waypoint_index", 0),
         )
 
     def __repr__(self) -> str:

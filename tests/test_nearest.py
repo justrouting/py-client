@@ -91,7 +91,10 @@ def test_nearest_query_encoding():
 
     with new_test_client(handler) as c:
         c.nearest.get(simple_nearest())
-    for key in ["number", "exclude"]:
+    for key in [
+        "number", "exclude", "bearings", "radiuses", "hints",
+        "approaches", "snapping", "generate_hints", "skip_waypoints",
+    ]:
         assert key not in seen["query"]
 
     # all options
@@ -102,10 +105,27 @@ def test_nearest_query_encoding():
                 coordinate=[103.8198, 1.3521],
                 number=3,
                 exclude=["motorway", "ferry"],
+                bearings=["0,20"],
+                radiuses=["500"],
+                hints=["abcDEF=="],
+                approaches=["curb"],
+                snapping="any",
+                generate_hints=True,
+                skip_waypoints=True,
             )
         )
-    assert seen["query"]["number"] == ["3"]
-    assert seen["query"]["exclude"] == ["motorway,ferry"]
+    for key, value in {
+        "number": "3",
+        "exclude": "motorway,ferry",
+        "bearings": "0,20",
+        "radiuses": "500",
+        "hints": "abcDEF==",
+        "approaches": "curb",
+        "snapping": "any",
+        "generate_hints": "true",
+        "skip_waypoints": "true",
+    }.items():
+        assert seen["query"][key] == [value]
 
     # number=0 (the engine default) stays omitted
     seen.clear()

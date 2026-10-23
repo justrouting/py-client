@@ -178,6 +178,7 @@ class GeocodeResult:
     housenumber: str = ""
     street: str = ""
     suburb: str = ""
+    district: str = ""
     city: str = ""
     county: str = ""
     state: str = ""
@@ -216,6 +217,7 @@ class GeocodeResult:
             housenumber=d.get("housenumber", ""),
             street=d.get("street", ""),
             suburb=d.get("suburb", ""),
+            district=d.get("district", ""),
             city=d.get("city", ""),
             county=d.get("county", ""),
             state=d.get("state", ""),

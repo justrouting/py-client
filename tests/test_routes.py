@@ -9,6 +9,7 @@ from conftest import OK_ROUTE, json_handler, new_test_client, simple_route
 # waypoints and a polyline geometry.
 ROUTE_FIXTURE = """{
   "code": "Ok",
+  "data_version": "2026-10-10T00:00:00Z",
   "waypoints": [
     {"hint":"aaa","distance":4.216,"name":"Marina Boulevard","location":[103.81982,1.35211]},
     {"hint":"bbb","distance":8.104,"name":"Changi Coast Road","location":[103.99151,1.36442]}
@@ -55,6 +56,7 @@ def test_routes_get_all_returns_alternatives_and_waypoints():
     with new_test_client(json_handler(200, ROUTE_FIXTURE)) as c:
         resp = c.routes.get_all(simple_route())
 
+    assert resp.data_version == "2026-10-10T00:00:00Z"
     assert len(resp.routes) == 2
     assert resp.routes[0].distance < resp.routes[1].distance, "routes ordered best first"
     assert len(resp.waypoints) == 2
@@ -127,7 +129,11 @@ def test_routes_query_encoding():
 
     with new_test_client(handler) as c:
         c.routes.get(simple_route())
-    for key in ["alternatives", "steps", "geometries", "overview", "annotations"]:
+    for key in [
+        "alternatives", "steps", "geometries", "overview", "annotations",
+        "bearings", "radiuses", "hints", "approaches", "snapping",
+        "generate_hints", "skip_waypoints", "waypoints",
+    ]:
         assert key not in seen["query"]
 
     # all options
@@ -144,6 +150,13 @@ def test_routes_query_encoding():
                 overview="full",
                 continue_straight=True,
                 exclude=["motorway", "ferry"],
+                bearings=["0,20", "90"],
+                radiuses=["unlimited", "500"],
+                hints=["abcDEF==", "ghiJKL=="],
+                approaches=["curb", "opposite"],
+                snapping="any",
+                generate_hints=True,
+                waypoint_indices=[0, 3],
             )
         )
     want = {
@@ -154,6 +167,13 @@ def test_routes_query_encoding():
         "overview": "full",
         "continue_straight": "true",
         "exclude": "motorway,ferry",
+        "bearings": "0,20;90",
+        "radiuses": "unlimited;500",
+        "hints": "abcDEF==;ghiJKL==",
+        "approaches": "curb;opposite",
+        "snapping": "any",
+        "generate_hints": "true",
+        "waypoints": "0;3",
     }
     for key, value in want.items():
         assert seen["query"][key] == [value]

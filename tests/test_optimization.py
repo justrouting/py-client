@@ -13,20 +13,22 @@ SOLUTION_FIXTURE = """{
     "cost": 2841, "routes": 1, "unassigned": 1,
     "delivery": [3], "pickup": [0],
     "setup": 0, "service": 900, "duration": 2841,
-    "waiting_time": 0, "priority": 0, "distance": 31204
+    "waiting_time": 0, "priority": 0, "distance": 31204,
+    "violations": []
   },
   "unassigned": [
-    {"id": 4, "location": [103.7, 1.42], "type": "job", "description": "far depot"}
+    {"id": 4, "location": [103.7, 1.42], "location_index": 3, "type": "job", "description": "far depot"}
   ],
   "routes": [
     {
       "vehicle": 1, "cost": 2841, "setup": 0, "service": 900,
       "duration": 2841, "waiting_time": 0, "priority": 0, "distance": 31204,
       "delivery": [3], "pickup": [0],
+      "description": "van one", "geometry": "encoded_polyline", "violations": [],
       "steps": [
-        {"type":"start","location":[103.8198,1.3521],"setup":0,"service":0,"waiting_time":0,"arrival":0,"duration":0,"distance":0},
-        {"type":"job","location":[103.8514,1.2897],"id":1,"job":1,"setup":0,"service":300,"waiting_time":0,"arrival":842,"duration":842,"distance":9120,"load":[2]},
-        {"type":"end","location":[103.8198,1.3521],"setup":0,"service":0,"waiting_time":0,"arrival":2841,"duration":2841,"distance":31204}
+        {"type":"start","location":[103.8198,1.3521],"setup":0,"service":0,"waiting_time":0,"arrival":0,"duration":0,"distance":0,"violations":[]},
+        {"type":"job","location":[103.8514,1.2897],"location_index":1,"id":1,"job":1,"setup":0,"service":300,"waiting_time":0,"arrival":842,"duration":842,"distance":9120,"load":[2],"violations":[]},
+        {"type":"end","location":[103.8198,1.3521],"setup":0,"service":0,"waiting_time":0,"arrival":2841,"duration":2841,"distance":31204,"violations":[]}
       ]
     }
   ]
@@ -54,6 +56,15 @@ def test_optimization_solve_decodes_response():
 
     assert len(solution.unassigned) == 1
     assert solution.unassigned[0].id == 4
+    assert solution.unassigned[0].location_index == 3
+
+    assert solution.summary.delivery == [3]
+    assert solution.summary.violations == []
+    assert route.description == "van one"
+    assert route.geometry == "encoded_polyline"
+    assert job.id == 1
+    assert job.location_index == 1
+    assert job.load == [2]
 
 
 def test_optimization_request_body():
@@ -73,18 +84,47 @@ def test_optimization_request_body():
                 end=[103.8198, 1.3521],
                 capacity=[4],
                 skills=[1],
+                type="van",
                 time_window=(28800, 43200),
+                breaks=[
+                    justrouting.Break(
+                        id=1,
+                        time_windows=[(36000, 39600)],
+                        service=1800,
+                        max_load=[2],
+                    )
+                ],
+                speed_factor=0.8,
+                max_tasks=3,
+                max_travel_time=14400,
+                max_distance=50000,
+                costs=justrouting.VehicleCosts(
+                    fixed=10, per_hour=2000, per_task_hour=300, per_km=2
+                ),
+                steps=[justrouting.VehicleStep(type="job", id=1)],
             )
         ],
         jobs=[
             justrouting.Job(
                 id=1,
                 location=[103.8514, 1.2897],
+                setup=60,
                 service=300,
+                setup_per_type={"van": 120},
+                service_per_type={"van": 600},
                 delivery=[1],
+                skills=[1],
+                priority=50,
                 time_windows=[(28800, 32400)],
             )
         ],
+        matrices={
+            "car": justrouting.CustomMatrix(
+                durations=[[0, 14], [21, 0]],
+                distances=[[0, 1500], [1500, 0]],
+                costs=[[0, 1], [1, 0]],
+            )
+        },
         options=justrouting.OptimizationOptions(geometry=True),
     )
 
@@ -101,15 +141,65 @@ def test_optimization_request_body():
     # Coordinates must serialise as [lon, lat] arrays.
     assert vehicle["start"] == [103.8198, 1.3521]
     assert vehicle["time_window"] == [28800, 43200]
+    assert vehicle["type"] == "van"
+    assert vehicle["speed_factor"] == 0.8
+    assert vehicle["max_tasks"] == 3
+    assert vehicle["max_travel_time"] == 14400
+    assert vehicle["max_distance"] == 50000
+    brk = vehicle["breaks"][0]
+    assert brk["id"] == 1
+    assert brk["service"] == 1800
+    assert brk["max_load"] == [2]
+    assert vehicle["costs"] == {"fixed": 10, "per_hour": 2000, "per_task_hour": 300, "per_km": 2}
+    assert vehicle["steps"] == [{"type": "job", "id": 1}]
 
     job = body["jobs"][0]
     assert job["service"] == 300
+    assert job["setup"] == 60
+    assert job["setup_per_type"] == {"van": 120}
+    assert job["service_per_type"] == {"van": 600}
+    assert job["priority"] == 50
     assert len(job["time_windows"]) == 1
+
+    assert body["matrices"]["car"]["durations"] == [[0, 14], [21, 0]]
+    assert body["matrices"]["car"]["distances"] == [[0, 1500], [1500, 0]]
+    assert body["matrices"]["car"]["costs"] == [[0, 1], [1, 0]]
 
     assert body["options"] == {"g": True}
 
     # Shipments were not set and must be omitted rather than sent as null.
     assert "shipments" not in body
+
+    # Zero-valued fields must be omitted rather than serialized.
+    assert "description" not in vehicle
+
+
+# Index-only locations must pass validation and serialize without
+# coordinates; row 0 must survive serialization.
+def test_optimization_index_only_locations():
+    seen = {}
+
+    def handler(request):
+        seen["body"] = json.loads(request.read_body())
+        return 200, '{"code":0,"summary":{},"routes":[],"unassigned":[]}', {}
+
+    req = justrouting.OptimizationRequest(
+        vehicles=[justrouting.Vehicle(id=1, start_index=0, type="van")],
+        jobs=[justrouting.Job(id=1, location_index=1, service=300)],
+        matrices={
+            "car": justrouting.CustomMatrix(durations=[[0, 14], [21, 0]])
+        },
+    )
+
+    with new_test_client(handler) as c:
+        c.optimization.solve(req)
+
+    vehicle = seen["body"]["vehicles"][0]
+    assert "start" not in vehicle
+    assert vehicle["start_index"] == 0
+    job = seen["body"]["jobs"][0]
+    assert "location" not in job
+    assert job["location_index"] == 1
 
 
 def test_optimization_shipments():
@@ -158,7 +248,7 @@ def test_optimization_validation():
                 vehicles=[justrouting.Vehicle(id=1)],
                 jobs=[justrouting.Job(id=1, location=depot)],
             ),
-            justrouting.InvalidRequestError,  # vehicle without a start or end
+            justrouting.InvalidRequestError,  # vehicle without start/end or indices
         ),
         (
             justrouting.OptimizationRequest(
@@ -172,7 +262,19 @@ def test_optimization_validation():
                 vehicles=[justrouting.Vehicle(id=1, start=depot)],
                 jobs=[justrouting.Job(id=1)],
             ),
-            justrouting.InvalidCoordinatesError,  # job with no location
+            justrouting.InvalidRequestError,  # job with neither location nor index
+        ),
+        (
+            justrouting.OptimizationRequest(
+                vehicles=[justrouting.Vehicle(id=1, start=depot)],
+                shipments=[
+                    justrouting.Shipment(
+                        pickup=justrouting.ShipmentStep(id=1, location=depot),
+                        delivery=justrouting.ShipmentStep(id=2),
+                    )
+                ],
+            ),
+            justrouting.InvalidRequestError,  # shipment step with neither location nor index
         ),
         (
             justrouting.OptimizationRequest(

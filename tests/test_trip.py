@@ -10,9 +10,9 @@ from conftest import json_handler, new_test_client
 TRIP_FIXTURE = """{
   "code": "Ok",
   "waypoints": [
-    {"hint":"aaa","distance":4.216,"name":"Marina Boulevard","location":[103.81982,1.35211]},
-    {"hint":"ccc","distance":2.3,"name":"Sentosa Gateway","location":[103.8514,1.2897]},
-    {"hint":"bbb","distance":8.104,"name":"Changi Coast Road","location":[103.99151,1.36442]}
+    {"hint":"aaa","distance":4.216,"name":"Marina Boulevard","location":[103.81982,1.35211],"trips_index":0,"waypoint_index":0},
+    {"hint":"ccc","distance":2.3,"name":"Sentosa Gateway","location":[103.8514,1.2897],"trips_index":0,"waypoint_index":1},
+    {"hint":"bbb","distance":8.104,"name":"Changi Coast Road","location":[103.99151,1.36442],"trips_index":0,"waypoint_index":2}
   ],
   "trips": [
     {
@@ -59,6 +59,9 @@ def test_trip_get_all_returns_visiting_order():
     # The input order was Marina, Sentosa, Changi; the engine may visit
     # Sentosa second.
     assert resp.waypoints[1].name == "Sentosa Gateway"
+    wp = resp.waypoints[1]
+    assert wp.trips_index == 0
+    assert wp.waypoint_index == 1
 
 
 # An empty trips array is a no-trip condition, not a decode failure.
@@ -115,7 +118,8 @@ def test_trip_query_encoding():
         c.trip.get(simple_trip())
     for key in [
         "roundtrip", "source", "destination", "steps", "geometries",
-        "overview", "annotations",
+        "overview", "annotations", "bearings", "radiuses", "hints",
+        "approaches", "snapping", "generate_hints", "skip_waypoints",
     ]:
         assert key not in seen["query"]
 
@@ -133,6 +137,13 @@ def test_trip_query_encoding():
                 geometries="geojson",
                 overview="full",
                 exclude=["motorway", "ferry"],
+                bearings=["0,20", "90"],
+                radiuses=["unlimited", "500"],
+                hints=["abcDEF==", "ghiJKL=="],
+                approaches=["curb", "opposite"],
+                snapping="any",
+                generate_hints=True,
+                skip_waypoints=True,
             )
         )
     for key, value in {
@@ -144,6 +155,13 @@ def test_trip_query_encoding():
         "geometries": "geojson",
         "overview": "full",
         "exclude": "motorway,ferry",
+        "bearings": "0,20;90",
+        "radiuses": "unlimited;500",
+        "hints": "abcDEF==;ghiJKL==",
+        "approaches": "curb;opposite",
+        "snapping": "any",
+        "generate_hints": "true",
+        "skip_waypoints": "true",
     }.items():
         assert seen["query"][key] == [value]
 

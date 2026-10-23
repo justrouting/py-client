@@ -27,12 +27,36 @@ class NearestRequest:
         profile: The routing profile. Defaults to "driving".
         exclude: Road classes to avoid, such as "motorway" or "ferry".
             Supported values depend on the profile.
+        bearings: Restrict the direction of travel at the coordinate:
+            ``"{bearing}"`` or ``"{bearing},{range}"`` in degrees, for
+            example ``"0,20"`` for north within ±20°.
+        radiuses: The snapping radius in metres for the coordinate;
+            ``"unlimited"`` disables snapping.
+        hints: Opaque tokens from a previous response's waypoints that
+            speed up snapping.
+        approaches: Restrict the road direction at the waypoint: ``"curb"``,
+            ``"opposite"``, or ``"unrestricted"`` (the engine default).
+        snapping: How the coordinate snaps onto the road network:
+            ``"default"`` (the engine default) avoids edges that cannot be
+            used as start or end points; ``"any"`` snaps to any edge.
+        generate_hints: Request a ``"hint"`` on every response waypoint for
+            reuse in later requests. The engine does this by default; set
+            to ``False`` to omit hints.
+        skip_waypoints: Omit the response waypoints. They still take part
+            in the nearest-segment calculation.
     """
 
     coordinate: PointLike = field(default_factory=Point)
     number: int = 0
     profile: str = ""
     exclude: List[str] = field(default_factory=list)
+    bearings: List[str] = field(default_factory=list)
+    radiuses: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    approaches: List[str] = field(default_factory=list)
+    snapping: str = ""
+    generate_hints: Optional[bool] = None
+    skip_waypoints: bool = False
 
     def __post_init__(self) -> None:
         self.coordinate = _point(self.coordinate)
@@ -43,6 +67,20 @@ class NearestRequest:
             q["number"] = str(self.number)
         if self.exclude:
             q["exclude"] = ",".join(self.exclude)
+        if self.bearings:
+            q["bearings"] = ";".join(self.bearings)
+        if self.radiuses:
+            q["radiuses"] = ";".join(self.radiuses)
+        if self.hints:
+            q["hints"] = ";".join(self.hints)
+        if self.approaches:
+            q["approaches"] = ";".join(self.approaches)
+        if self.snapping:
+            q["snapping"] = self.snapping
+        if self.generate_hints is not None:
+            q["generate_hints"] = "true" if self.generate_hints else "false"
+        if self.skip_waypoints:
+            q["skip_waypoints"] = "true"
         return q
 
 
